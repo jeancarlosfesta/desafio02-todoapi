@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 
 const { v4: uuidv4, validate } = require('uuid');
+const { request } = require('express');
 
 const app = express();
 app.use(express.json());
@@ -9,20 +10,83 @@ app.use(cors());
 
 const users = [];
 
+// complete
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+
+  const { username } = request.headers;
+
+  const user = users.find((user) => user.username === username);
+
+  if (!user) {
+    return response.status(404).json({ error: 'User not found!' });
+  }
+
+  request.user = user;
+
+  return next();
+
 }
 
+// complete
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+
+  const { user } = request;
+
+  if (user.todos.length > 9 && user.pro === false) {
+    return response.status(403).json({ error: 'Exceeded to do free limits, consider upgrading the plan to pro!' })
+  }
+
+  return next();
+
 }
 
+// complete
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+
+  const { id } = request.params;
+  const { username } = request.headers;
+
+  const user = users.find((user) => user.username === username);
+
+  // validar um usuario
+  if (!user) {
+    return response.status(404).json({ error: 'User not found!' });
+  }
+
+  // validar o uuid
+  if (!validate(id)) {
+    return response.status(400).json({ error: 'Id is not valid!' });
+  }
+
+  // validar ser o id do todo eh do usuario
+  const toDos = user.todos;
+
+  const toDo = toDos.find((todos) => todos.id === id);
+
+  if (!toDo) {
+    return response.status(404).json({ error: 'ToDo not found!' });
+  }
+
+  request.user = user;
+  request.todo = toDo;
+
+  return next();
 }
 
+// complete
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params;
+
+  const user = users.find((user) => user.id === id);
+
+  if (!user) {
+    return response.status(404).json({ error: 'User not found!' });
+  }
+
+  request.user = user;
+
+  return next();
+
 }
 
 app.post('/users', (request, response) => {
